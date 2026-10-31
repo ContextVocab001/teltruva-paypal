@@ -1,4 +1,4 @@
-# Teltruva
+<img width="4032" height="614" alt="image" src="https://github.com/user-attachments/assets/62b23a5f-12c7-40c0-88d9-299009ceaee6" /># Teltruva
 
 Teltruva is an AI-powered multilingual consumer issue resolution application built with NVIDIA Nemotron 3.5 Lightning through Nebius Token Factory.
 
@@ -224,4 +224,4 @@ Planned improvements include:
 
 ## License
 
-This project is licensed under the MIT License. See the repository license for details.
+This project is licensed under the Apache License 2.0. See the LICENSE file for details.
