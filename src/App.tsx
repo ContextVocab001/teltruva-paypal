@@ -4,6 +4,7 @@ import { MsgReader } from '@kenjiuno/msgreader-web-ng'
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import type { ChangeEvent, DragEvent } from 'react'
 import './App.css'
+import PaymentModal from './components/payment/PaymentModal'
 import { analyzeCase, buildCaseReviewData, generateProtectedDraft, prepareStructuredCase, runOcr, translateApprovedDraft } from './api/caseAnalysis'
 import type { CaseAnalysis, UploadedSource } from './api/caseAnalysis'
 import type { CaseReviewData } from './types/workflow'
@@ -175,6 +176,7 @@ function App() {
   const [copyStatus, setCopyStatus] = useState<'subject' | 'message' | 'all' | 'error' | null>(null)
   const [showStructure, setShowStructure] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState('')
   const [analysis, setAnalysis] = useState<CaseAnalysis | null>(null)
@@ -262,6 +264,7 @@ function App() {
     setFileError('')
     setMessageFileError('')
     setShowModal(false)
+    setShowPaymentModal(false)
     setShowStructure(false)
     invalidateGeneratedResults()
     window.scrollTo(0,0)
@@ -309,6 +312,18 @@ function App() {
       setShowModal(false); go('review')
     } catch (error) { setAnalysisError(friendlyError(error, 'Analysis failed.', 'analysis')) } finally { setIsAnalyzing(false) }
   }
+  const openPaymentModal = () => {
+    if (!canAnalyze || isAnalyzing) return
+    setAnalysisError('')
+    setShowModal(false)
+    setShowPaymentModal(true)
+  }
+
+  const handlePaymentCompleted = () => {
+    setShowPaymentModal(false)
+    void analyzeCurrentCase()
+  }
+
   const friendlyError = (error: unknown, fallback: string, stage: 'analysis'|'draft'|'translation' = 'analysis') => {
     const message = error instanceof Error ? error.message : fallback
     if (/overload|overloaded|busy|capacity|temporar|rate limit|Nebius 429|Nebius 502|Nebius 503|Nebius 504|failed \(504\)|504|gateway timeout/i.test(message)) {
@@ -508,7 +523,8 @@ function App() {
   )
 
   return <div className="app">{header}{view==='intake'&&intake}{view==='review'&&review}{view==='draft'&&draft}{view==='translation'&&translation}
-    {showModal&&<div className="modal-bg" onMouseDown={()=>setShowModal(false)}><section className="modal" onMouseDown={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowModal(false)}>×</button><header><span>AI</span><div><p>{t.modalLabel}</p><h2>{canAnalyze?t.ready:t.missing}</h2></div></header><div className="status"><div className={hasMessage?'ok':hasFiles?'info':'bad'}><span className="status-icon">{hasMessage?'✓':hasFiles?'i':'!'}</span><div><b>{t.tabs[0]}</b><p>{hasMessage?t.added:hasFiles?t.sourceFromDocs:t.sourceMissing}</p></div></div><div className={hasFiles?'ok':'info'}><span className="status-icon">{hasFiles?'✓':'i'}</span><div><b>{t.tabs[1]}</b><p>{hasFiles?`${files.length} ${t.added}`:t.optionalDocs}</p></div></div><div className={hasRequest?'ok':'bad'}><span className="status-icon">{hasRequest?'✓':'!'}</span><div><b>{t.tabs[2]}</b><p>{hasRequest?t.added:t.requestMissing}</p></div></div></div>{analysisError&&<div className="analysis-api-error" role="alert">{analysisError}</div>}<footer><button onClick={()=>setShowModal(false)} disabled={isAnalyzing}>{canAnalyze?t.reviewInputs:t.addMissing}</button>{canAnalyze&&<button className="primary" onClick={analyzeCurrentCase} disabled={isAnalyzing}>{isAnalyzing ? (language==='ja'?'整理しています…':language==='es'?'Organizando…':'Organizing…') : `${t.organize} →`}</button>}</footer></section></div>}
+    <PaymentModal language={language} isOpen={showPaymentModal} onClose={()=>setShowPaymentModal(false)} onCompleted={handlePaymentCompleted} />
+    {showModal&&<div className="modal-bg" onMouseDown={()=>setShowModal(false)}><section className="modal" onMouseDown={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowModal(false)}>×</button><header><span>AI</span><div><p>{t.modalLabel}</p><h2>{canAnalyze?t.ready:t.missing}</h2></div></header><div className="status"><div className={hasMessage?'ok':hasFiles?'info':'bad'}><span className="status-icon">{hasMessage?'✓':hasFiles?'i':'!'}</span><div><b>{t.tabs[0]}</b><p>{hasMessage?t.added:hasFiles?t.sourceFromDocs:t.sourceMissing}</p></div></div><div className={hasFiles?'ok':'info'}><span className="status-icon">{hasFiles?'✓':'i'}</span><div><b>{t.tabs[1]}</b><p>{hasFiles?`${files.length} ${t.added}`:t.optionalDocs}</p></div></div><div className={hasRequest?'ok':'bad'}><span className="status-icon">{hasRequest?'✓':'!'}</span><div><b>{t.tabs[2]}</b><p>{hasRequest?t.added:t.requestMissing}</p></div></div></div>{analysisError&&<div className="analysis-api-error" role="alert">{analysisError}</div>}<footer><button onClick={()=>setShowModal(false)} disabled={isAnalyzing}>{canAnalyze?t.reviewInputs:t.addMissing}</button>{canAnalyze&&<button className="primary" onClick={openPaymentModal} disabled={isAnalyzing}>{isAnalyzing ? (language==='ja'?'整理しています…':language==='es'?'Organizando…':'Organizing…') : `${t.organize} →`}</button>}</footer></section></div>}
   </div>
 }
 
