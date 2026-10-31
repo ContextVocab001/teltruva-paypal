@@ -42,14 +42,14 @@ Nothing is translated, approved, or sent without the user's review.
 
 ## User Workflow
 
-1. The user describes the issue in the user's own language.
-2. The user uploads supporting documents.
-3. Teltruva extracts and organizes relevant information.
-4. The user reviews source-confirmed facts, personal statements, and the requested outcome.
-5. Teltruva prepares a recipient-ready inquiry.
-6. The user compares and approves the translated version.
-7. The user copies the completed inquiry and verifies an official contact route.
-8. The user submits the inquiry through an available channel.
+- The user describes the issue in the user's own language.
+- The user uploads supporting documents.
+- Teltruva extracts and organizes relevant information.
+- The user reviews source-confirmed facts, personal statements, and the requested outcome.
+- Teltruva prepares a recipient-ready inquiry.
+- The user compares and approves the translated version.
+- The user copies the completed inquiry and verifies an official contact route.
+- The user submits the inquiry through an available channel.
 
 ## NVIDIA Nemotron Integration
 
@@ -113,7 +113,7 @@ The frontend and server-side API routes are deployed on Vercel, while the AI cas
 ## Project Structure
 
 ```text
-teltruva/
+teltruva-paypal/
 |-- api/                 # Server-side API routes
 |-- public/              # Static assets
 |-- src/                 # React and TypeScript application
@@ -130,11 +130,13 @@ teltruva/
 
 ### Prerequisites
 
-Install the following:
+Install or prepare the following:
 
 - Node.js 18 or later
 - npm
 - A Nebius Token Factory API key
+- An NVIDIA API key for document processing
+- A Brave Search API key for official contact-route discovery
 
 ### Installation
 
@@ -153,18 +155,12 @@ npm install
 
 ### Environment Variables
 
-Create a local `.env` file based on the environment-variable names referenced by the server-side API routes.
-
-At minimum, configure the Nebius credential used by the project:
+Create a local `.env` file and configure the required credentials:
 
 ```env
 NEBIUS_API_KEY=your_nebius_api_key
-```
-
-If the document-processing route in your local version references a separate NVIDIA credential, also configure:
-
-```env
 NVIDIA_API_KEY=your_nvidia_api_key
+BRAVE_SEARCH_API_KEY=your_brave_search_api_key
 ```
 
 Do not commit real API keys to GitHub. Environment files are excluded through `.gitignore`.
