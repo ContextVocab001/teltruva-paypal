@@ -1,15 +1,17 @@
-import type { MouseEvent } from 'react';
-import PaymentSummary from './PaymentSummary';
-import PayPalCheckout from './PayPalCheckout';
-import type { CaptureOrderResponse } from '../../types/payment';
-import './payment.css';
+import type { MouseEvent } from 'react'
+import PaymentSummary from './PaymentSummary'
+import PayPalCheckout from './PayPalCheckout'
+import type { TeltruvaCase } from '../../types/case'
+import type { CaptureOrderResponse } from '../../types/payment'
+import './payment.css'
 
 type PaymentModalProps = {
-  language: 'en' | 'ja' | 'es';
-  isOpen: boolean;
-  onClose: () => void;
-  onCompleted: (capture: CaptureOrderResponse) => void;
-};
+  language: 'en' | 'ja' | 'es'
+  isOpen: boolean
+  caseContext?: Pick<TeltruvaCase, 'internalId' | 'displayCaseId'>
+  onClose: () => void
+  onCompleted: (capture: CaptureOrderResponse) => void
+}
 
 const copy = {
   en: {
@@ -27,23 +29,24 @@ const copy = {
     close: 'Cerrar la ventana de pago',
     back: 'Volver a los detalles del caso',
   },
-} as const;
+} as const
 
 function PaymentModal({
   language,
   isOpen,
+  caseContext,
   onClose,
   onCompleted,
 }: PaymentModalProps) {
   if (!isOpen) {
-    return null;
+    return null
   }
 
-  const text = copy[language];
+  const text = copy[language]
 
   function handleBackdropMouseDown(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) {
-      onClose();
+      onClose()
     }
   }
 
@@ -70,14 +73,22 @@ function PaymentModal({
 
         <PaymentSummary language={language} />
 
-        <PayPalCheckout language={language} onCompleted={onCompleted} />
+        <PayPalCheckout
+          language={language}
+          caseContext={caseContext}
+          onCompleted={onCompleted}
+        />
 
-        <button type="button" className="payment-modal__back" onClick={onClose}>
+        <button
+          type="button"
+          className="payment-modal__back"
+          onClick={onClose}
+        >
           {text.back}
         </button>
       </section>
     </div>
-  );
+  )
 }
 
-export default PaymentModal;
+export default PaymentModal
