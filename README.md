@@ -1,4 +1,4 @@
-<img width="4032" height="614" alt="image" src="https://github.com/user-attachments/assets/62b23a5f-12c7-40c0-88d9-299009ceaee6" /># Teltruva
+# Teltruva
 
 Teltruva is an AI-powered multilingual consumer issue resolution application built with NVIDIA Nemotron 3.5 Lightning through Nebius Token Factory.
 
@@ -6,7 +6,7 @@ Teltruva helps users organize billing errors, unexpected charges, cancellation p
 
 ## Live Demo
 
-https://teltruva-phi.vercel.app
+https://teltruva-paypal.vercel.app
 
 ## The Problem
 
@@ -141,8 +141,8 @@ Install the following:
 Clone the repository:
 
 ```bash
-git clone https://github.com/ContextVocab001/teltruva.git
-cd teltruva
+git clone https://github.com/ContextVocab001/teltruva-paypal.git
+cd teltruva-paypal
 ```
 
 Install the dependencies:
@@ -187,7 +187,7 @@ http://localhost:5173
 
 The public demonstration is deployed on Vercel:
 
-https://teltruva-phi.vercel.app
+https://teltruva-paypal.vercel.app
 
 Required credentials are configured as Vercel environment variables and are not stored in this repository.
 
