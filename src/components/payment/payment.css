@@ -1,0 +1,243 @@
+.payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.66);
+  backdrop-filter: blur(4px);
+}
+
+.payment-modal {
+  position: relative;
+  width: min(100%, 620px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid #dbe4f0;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+  color: #172033;
+}
+
+.payment-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #d7dfeb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #42526b;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.payment-modal__close:hover {
+  background: #f3f6fa;
+}
+
+.payment-modal__close:focus-visible,
+.payment-modal__back:focus-visible,
+.paypal-checkout__button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 3px;
+}
+
+.payment-summary {
+  padding: 36px 36px 24px;
+}
+
+.payment-summary__heading {
+  padding-right: 52px;
+}
+
+.payment-summary__eyebrow {
+  margin: 0 0 8px;
+  color: #315fd6;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.payment-summary__heading h2 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1.2;
+}
+
+.payment-summary__features {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.payment-summary__features li {
+  position: relative;
+  padding-left: 30px;
+  color: #3f4e65;
+  line-height: 1.55;
+}
+
+.payment-summary__features li::before {
+  position: absolute;
+  top: 0.08em;
+  left: 0;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border-radius: 999px;
+  background: #e9f8ef;
+  color: #18864b;
+  content: '✓';
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.payment-summary__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #d9e2ef;
+  border-radius: 16px;
+  background: #f7f9fc;
+}
+
+.payment-summary__total span {
+  color: #526179;
+  font-weight: 700;
+}
+
+.payment-summary__total strong {
+  color: #172033;
+  font-size: 1.35rem;
+}
+
+.payment-summary__sandbox-note {
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: #fff7df;
+  color: #765400;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.paypal-checkout {
+  padding: 0 36px 20px;
+}
+
+.paypal-checkout__button {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffc439;
+  color: #172c57;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.paypal-checkout__button:hover:not(:disabled) {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+.paypal-checkout__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.paypal-checkout__message {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: #eef3fb;
+  color: #33445e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.paypal-checkout__message--completed {
+  background: #e8f7ee;
+  color: #176a3c;
+}
+
+.paypal-checkout__message--failed {
+  background: #fff0f0;
+  color: #a32d2d;
+}
+
+.paypal-checkout__message--cancelled {
+  background: #fff7df;
+  color: #765400;
+}
+
+.payment-modal__back {
+  display: block;
+  margin: 0 auto 30px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: #526179;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payment-modal__back:hover {
+  color: #244fc0;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .payment-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .payment-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .payment-summary {
+    padding: 30px 22px 20px;
+  }
+
+  .payment-summary__heading {
+    padding-right: 44px;
+  }
+
+  .paypal-checkout {
+    padding: 0 22px 18px;
+  }
+
+  .payment-modal__back {
+    margin-bottom: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paypal-checkout__button {
+    transition: none;
+  }
+}
