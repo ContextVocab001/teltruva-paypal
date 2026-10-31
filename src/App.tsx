@@ -7,10 +7,12 @@ import './App.css'
 import PaymentModal from './components/payment/PaymentModal'
 import ProcessingOverlay from './components/processing/ProcessingOverlay'
 import type { CaptureOrderResponse } from './types/payment'
+import type { TeltruvaCase } from './types/case'
 import type { ProcessingStage } from './types/processing'
 import { analyzeCase, buildCaseReviewData, generateProtectedDraft, prepareStructuredCase, runOcr, translateApprovedDraft } from './api/caseAnalysis'
 import type { CaseAnalysis, UploadedSource } from './api/caseAnalysis'
 import type { CaseReviewData } from './types/workflow'
+import { clearCurrentCase, createCase, loadCurrentCase, saveCurrentCase } from './utils/caseStorage'
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker
 
@@ -204,6 +206,7 @@ function App() {
   const [showModal, setShowModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paidCapture, setPaidCapture] = useState<CaptureOrderResponse | null>(() => readPaidCapture())
+  const [currentCase, setCurrentCase] = useState<TeltruvaCase | null>(() => loadCurrentCase())
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('reading-documents')
   const [showProcessingOverlay, setShowProcessingOverlay] = useState(false)
@@ -297,6 +300,8 @@ function App() {
     setShowProcessingOverlay(false)
     setProcessingStage('reading-documents')
     setPaidCapture(null)
+    setCurrentCase(null)
+    clearCurrentCase()
     window.sessionStorage.removeItem(PAYMENT_SESSION_KEY)
     setShowStructure(false)
     invalidateGeneratedResults()
@@ -360,12 +365,41 @@ function App() {
       return
     }
 
+    const caseForPayment = currentCase ?? createCase({
+      interfaceLanguage: language,
+      recipientLanguage,
+      issueSummary: request,
+      requestedOutcome: request,
+    })
+
+    const awaitingPaymentCase = saveCurrentCase({
+      ...caseForPayment,
+      status: 'AWAITING_PAYMENT',
+      paymentStatus: 'CREATED',
+      interfaceLanguage: language,
+      recipientLanguage,
+      issueSummary: request.trim(),
+      requestedOutcome: request.trim(),
+    })
+
+    setCurrentCase(awaitingPaymentCase)
     setShowPaymentModal(true)
   }
 
   const handlePaymentCompleted = (capture: CaptureOrderResponse) => {
     window.sessionStorage.setItem(PAYMENT_SESSION_KEY, JSON.stringify(capture))
     setPaidCapture(capture)
+
+    if (currentCase) {
+      const paidCase = saveCurrentCase({
+        ...currentCase,
+        status: 'PAID',
+        paymentStatus: 'COMPLETED',
+        aiStatus: 'QUEUED',
+      })
+      setCurrentCase(paidCase)
+    }
+
     setShowPaymentModal(false)
     setProcessingStage('payment-confirmed')
     setShowProcessingOverlay(true)
@@ -574,7 +608,7 @@ function App() {
 
   return <div className="app">{header}{view==='intake'&&intake}{view==='review'&&review}{view==='draft'&&draft}{view==='translation'&&translation}
     <ProcessingOverlay language={language} isVisible={showProcessingOverlay} stage={processingStage} />
-    <PaymentModal language={language} isOpen={showPaymentModal} onClose={()=>setShowPaymentModal(false)} onCompleted={handlePaymentCompleted} />
+    <PaymentModal language={language} isOpen={showPaymentModal} caseContext={currentCase ?? undefined} onClose={()=>setShowPaymentModal(false)} onCompleted={handlePaymentCompleted} />
     {showModal&&<div className="modal-bg" onMouseDown={()=>setShowModal(false)}><section className="modal" onMouseDown={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowModal(false)}>×</button><header><span>AI</span><div><p>{t.modalLabel}</p><h2>{canAnalyze?t.ready:t.missing}</h2></div></header><div className="status"><div className={hasMessage?'ok':hasFiles?'info':'bad'}><span className="status-icon">{hasMessage?'✓':hasFiles?'i':'!'}</span><div><b>{t.tabs[0]}</b><p>{hasMessage?t.added:hasFiles?t.sourceFromDocs:t.sourceMissing}</p></div></div><div className={hasFiles?'ok':'info'}><span className="status-icon">{hasFiles?'✓':'i'}</span><div><b>{t.tabs[1]}</b><p>{hasFiles?`${files.length} ${t.added}`:t.optionalDocs}</p></div></div><div className={hasRequest?'ok':'bad'}><span className="status-icon">{hasRequest?'✓':'!'}</span><div><b>{t.tabs[2]}</b><p>{hasRequest?t.added:t.requestMissing}</p></div></div></div>{analysisError&&<div className="analysis-api-error" role="alert">{analysisError}</div>}<footer><button onClick={()=>setShowModal(false)} disabled={isAnalyzing}>{canAnalyze?t.reviewInputs:t.addMissing}</button>{canAnalyze&&<button className="primary" onClick={continueToPaidAnalysis} disabled={isAnalyzing}>{isAnalyzing ? (language==='ja'?'整理しています…':language==='es'?'Organizando…':'Organizing…') : paidCapture ? (language==='ja'?'支払い済み・案件整理を再試行 →':language==='es'?'Pago completado · Reintentar análisis →':'Paid · Retry case analysis →') : `${t.organize} →`}</button>}</footer></section></div>}
   </div>
 }
