@@ -1,27 +1,31 @@
 # Teltruva
 
-Teltruva is an AI-powered multilingual consumer issue resolution application built with NVIDIA Nemotron 3.5 Lightning through Nebius Token Factory.
+**Tell. Translate. Trust.**
 
-Teltruva helps users organize billing errors, unexpected charges, cancellation problems, and other consumer issues in their own language, then prepare a clear and respectful inquiry in the recipient's language.
+Teltruva is an AI-powered, multilingual consumer issue resolution application. It helps people turn receipts, billing records, and plain-language explanations into a structured case and a clear inquiry in the recipient organization's language.
+
+For the PayPal AI Hackathon, Teltruva adds case-based PayPal Checkout. Each payment is associated with a Teltruva case ID, and the paid AI workflow is unlocked only for the matching case.
 
 ## Live Demo
 
 https://teltruva-paypal.vercel.app
 
+> The current public demo uses PayPal Sandbox. No real payment is charged.
+
 ## The Problem
 
 A language barrier can turn a solvable service issue into financial loss.
 
-Translation alone is often insufficient. A user must still determine:
+Translation alone is not enough. A user may still need to determine:
 
 - Which transaction details matter
 - What evidence supports the inquiry
 - Which information is missing
 - How to explain the issue clearly
 - What resolution to request
-- How to locate an official contact route
+- Where to submit the inquiry through an official channel
 
-Teltruva supports this complete workflow while keeping the user in control.
+Teltruva supports this workflow while keeping the user in control. It does not automatically send the inquiry or treat an unverified search result as an official contact route.
 
 ## What Teltruva Does
 
@@ -32,200 +36,162 @@ Teltruva allows a user to:
 - Extract relevant transaction details from the evidence
 - Separate source-confirmed facts from user-provided statements
 - Identify essential missing information without inventing details
-- Review the organized case before translation
+- Review the organized case before creating the inquiry
+- Pay for the case-based AI support flow through PayPal Sandbox
 - Generate a clear inquiry in the recipient's language
-- Compare and approve the translation before proceeding
-- Copy the completed inquiry for use in an official web form, email, or chat
-- Search for possible official contact routes while requiring user verification
-- Review a one-time case-support fee before AI processing begins
-- Pay in PayPal Sandbox with a PayPal test account or sandbox payment card
-- See step-by-step status while documents and case details are being processed
-- Retry AI case organization without another payment during the same browser session
+- Review the translated result before using it
+- Copy the completed inquiry for an official web form, email, or chat
+- View possible official contact routes while retaining responsibility for verification
 
-Nothing is translated, approved, or sent without the user's review.
+Nothing is approved or sent without the user's review.
 
-## User Workflow
+## PayPal + AI Workflow
 
-1. The user describes the issue in the user's own language.
-2. The user uploads supporting documents.
-3. Teltruva shows the one-time case-support price and included services.
-4. The user completes a PayPal Sandbox payment using a test PayPal account or sandbox card.
-5. After server-side payment capture succeeds, Teltruva starts OCR and AI case organization.
-6. A processing overlay shows the current stage while the case is prepared.
-7. The user reviews source-confirmed facts, personal statements, and the requested outcome.
-8. Teltruva prepares a recipient-ready inquiry.
-9. The user compares and approves the translated version.
-10. The user copies the completed inquiry and verifies an official contact route.
-11. The user submits the inquiry through an available channel.
+1. The user explains the issue and uploads supporting evidence.
+2. Teltruva creates a unique internal case ID and a user-facing case ID.
+3. The case ID is passed into the PayPal order flow.
+4. The user completes payment with a PayPal Sandbox Personal account.
+5. Teltruva captures the PayPal order on the server side.
+6. The completed payment is stored with the matching Teltruva case ID for the browser session.
+7. AI processing continues only when the payment belongs to the current case.
+8. A payment from a previous case cannot be reused for a different case.
+9. Teltruva organizes the evidence, creates the inquiry, and presents the final result for user review and copying.
 
-## PayPal Sandbox Integration
+This is not a donation button added beside the product. PayPal Checkout is part of the service-delivery workflow and controls access to the paid case-processing step.
 
-Teltruva uses PayPal Sandbox to demonstrate a one-time payment flow before paid AI processing begins.
+## Why PayPal Matters
 
-The current case-support product is configured as:
+Teltruva uses a case-based, one-time purchase model rather than a subscription. This fits a consumer workflow in which assistance may be needed only when a billing issue, unexpected charge, cancellation problem, or cross-border service dispute occurs.
 
-- One initial inquiry message
-- Two follow-up responses
-- One pre-send revision per message
-- Unlimited access to saved documents
-- No subscription or automatic renewal
-- Sandbox price: USD 9.99
+The current Sandbox package is displayed as **USD 9.99** and includes the initial inquiry workflow and limited follow-up support. The amount and package design are prototype settings for the hackathon demonstration.
 
-The payment flow is separated into server-side and browser-side responsibilities:
+## AI Capabilities
 
-```text
-Browser payment UI
-    -> Teltruva PayPal client API
-    -> Vercel serverless PayPal endpoints
-    -> PayPal Sandbox Orders API
-```
+Teltruva uses NVIDIA Nemotron through Nebius Token Factory for structured case analysis and inquiry generation. The AI workflow is designed to:
 
-Server-side endpoints:
+- Extract transaction and organization details from uploaded evidence
+- Distinguish evidence from the user's own explanation
+- Preserve uncertainty instead of inventing missing facts
+- Organize the issue and requested outcome
+- Generate a respectful, recipient-ready inquiry
+- Support multilingual review and translation
+- Suggest possible official contact routes for user verification
 
-```text
-/api/paypal/config
-/api/paypal/create-order
-/api/paypal/capture-order
-```
+Model output is validated and remains subject to user review.
 
-The server defines the authoritative price, creates the PayPal order, and captures the approved payment. The PayPal client secret is never exposed to the browser.
+## Demo Flow
 
-After capture succeeds, Teltruva starts document reading and AI case organization. If AI organization fails, the payment result is retained in `sessionStorage` for the current browser tab so the user can retry the AI step without being charged again.
+A representative demonstration uses a hotel receipt containing an unexpected fee.
 
-This browser-session payment state is temporary for the hackathon prototype. A production version should store payment entitlements against a persistent Teltruva Case ID in a database.
+1. Open the live demo.
+2. Select the interface language.
+3. Add a receipt or billing document.
+4. Describe what happened in natural language.
+5. Enter the requested resolution.
+6. Select the recipient language.
+7. Choose **Analyze case**.
+8. Review the case-based purchase screen.
+9. Complete payment using a PayPal Sandbox Personal buyer account.
+10. Review the organized case.
+11. Continue to the inquiry draft.
+12. Review the translated result and official contact-route candidates.
+13. Copy the inquiry for use in an official form, email, or chat.
 
-## NVIDIA Nemotron Integration
+Do not use the PayPal Sandbox Business merchant account as the buyer account.
 
-Teltruva uses NVIDIA Nemotron 3.5 Lightning through Nebius Token Factory.
+## Hackathon Development
 
-Nemotron is used to:
+Teltruva's multilingual consumer-support concept and core AI workflow existed before the PayPal AI Hackathon. The following capabilities were added or expanded for this hackathon build:
 
-- Understand multilingual consumer issues
-- Follow detailed case-analysis instructions
-- Distinguish evidence-based facts from user-provided statements
-- Identify essential missing information
-- Preserve the user's intended outcome
-- Return structured JSON for the application interface
-- Generate clear, recipient-ready inquiries
-
-We selected the Lightning variant because Teltruva requires responsive inference in an interactive web workflow. The model provided a useful balance of multilingual understanding, instruction following, structured output, and response speed.
-
-## Prompt Engineering and Structured Output
-
-Teltruva uses Nemotron without fine-tuning.
-
-The prompt engineering approach includes:
-
-- A defined role and case-analysis structure
-- Explicit separation of source-confirmed facts and user statements
-- Instructions not to invent missing information
-- Structured JSON output requirements
-- Explicit definitions for required fields
-- Application-level validation before displaying results
-- Extended thinking disabled for this workflow to help return a complete structured response within the output limit
-
-These controls make the model output easier to review and integrate into the application.
-
-## How Nebius Accelerated Development
-
-Nebius Token Factory provides the runtime API access used to call NVIDIA Nemotron 3.5 Lightning.
-
-Token Factory allowed us to integrate an NVIDIA open model without:
-
-- Provisioning dedicated GPU instances
-- Downloading and managing model weights
-- Configuring a model server
-- Operating inference infrastructure
-- Building custom autoscaling infrastructure
-
-Teltruva sends structured case information to Nemotron through a server-side API route. Nemotron returns structured JSON that the application uses to display confirmed facts, user-provided statements, missing information, and the requested outcome.
-
-The frontend and server-side API routes are deployed on Vercel, while the AI case analysis is performed through Nebius Token Factory.
+- PayPal Sandbox Checkout integration
+- Server-side PayPal order creation and capture
+- Teltruva case ID generation
+- Passing case identifiers through the payment flow
+- Association of completed payment data with the correct case
+- Case-based paid access to AI analysis
+- Prevention of payment reuse across different cases
+- Payment-aware retry behavior after a completed payment
+- A one-time purchase screen explaining what is included
 
 ## Technology Stack
 
-- NVIDIA Nemotron 3.5 Lightning
-- Nebius Token Factory
 - React
 - TypeScript
 - Vite
-- Node.js
 - Vercel
-- PayPal Sandbox and PayPal Orders API
-- OCR and document-processing workflows
+- PayPal JavaScript SDK
+- PayPal Orders API
+- NVIDIA Nemotron
+- Nebius Token Factory
+- PDF.js
+- Browser session storage for the current prototype
 
-## Project Structure
+## High-Level Architecture
 
-```text
-teltruva/
-|-- api/                 # Server-side API routes
-|-- public/              # Static assets
-|-- src/                 # React and TypeScript application
-|-- index.html
-|-- package.json
-|-- package-lock.json
-|-- tsconfig.json
-|-- tsconfig.app.json
-|-- tsconfig.node.json
-`-- vite.config.ts
-```
+### Client
+
+The React application manages intake, document selection, case review, the PayPal modal, inquiry generation, translation review, and copying the completed inquiry.
+
+### Server-side API routes
+
+Server-side routes protect credentials and handle:
+
+- PayPal configuration
+- PayPal order creation
+- PayPal order capture
+- AI and document-processing requests
+
+### Case and payment association
+
+Before payment, Teltruva creates and saves the current case. The PayPal order receives the Teltruva case identifiers. After capture, the application stores the completed capture together with the matching internal case ID. Paid access is recognized only when the stored case ID matches the active case.
 
 ## Local Setup
 
 ### Prerequisites
 
-Install the following:
-
-- Node.js 18 or later
+- Node.js 20 or later
 - npm
-- A Nebius Token Factory API key
+- A PayPal Developer Sandbox application
+- Access to the configured AI provider
 
 ### Installation
 
-Clone the repository:
-
 ```bash
-git clone https://github.com/ContextVocab001/teltruva-paypal.git
+git clone <your-repository-url>
 cd teltruva-paypal
-```
-
-Install the dependencies:
-
-```bash
 npm install
 ```
 
 ### Environment Variables
 
-Create a local `.env` file based on the environment-variable names referenced by the server-side API routes.
+Create a local environment file using the variable names expected by the server-side PayPal and AI routes in this repository.
 
-Configure the credentials used by the AI, document-processing, search, and PayPal Sandbox routes:
+At minimum, configure:
 
-```env
-NEBIUS_API_KEY=your_nebius_api_key
-NVIDIA_API_KEY=your_nvidia_api_key
-BRAVE_SEARCH_API_KEY=your_brave_search_api_key
-PAYPAL_CLIENT_ID=your_paypal_sandbox_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_sandbox_client_secret
-PAYPAL_ENV=sandbox
-```
+- PayPal Sandbox client ID
+- PayPal Sandbox client secret
+- PayPal environment set to Sandbox
+- Nebius API key
+- Any separately required NVIDIA credential used by the document-processing route
 
-`PAYPAL_CLIENT_SECRET` must remain server-side. Do not place it in browser code or expose it through a `VITE_` environment variable.
-
-Do not commit real API keys or PayPal credentials to GitHub. Environment files are excluded through `.gitignore`.
+Never commit real credentials, Sandbox passwords, or environment files to GitHub.
 
 ### Run the Application
-
-Start the local development server:
 
 ```bash
 npm run dev
 ```
 
-Open the local URL shown in the terminal, typically:
+Open the local URL shown by Vite, typically:
 
 ```text
 http://localhost:5173
+```
+
+### Production Build
+
+```bash
+npm run build
 ```
 
 ## Deployment
@@ -234,47 +200,54 @@ The public demonstration is deployed on Vercel:
 
 https://teltruva-paypal.vercel.app
 
-Required credentials are configured as Vercel environment variables and are not stored in this repository.
+Required credentials are configured as Vercel environment variables and are not stored in the repository.
 
 ## Security and User Control
 
 Teltruva is designed around the following principles:
 
 - Do not invent essential transaction details
-- Clearly separate evidence from user-provided statements
-- Require user review before translation
+- Separate uploaded evidence from user-provided statements
+- Require user review before the inquiry is used
 - Do not send messages automatically
 - Do not automatically treat a search result as an official contact channel
-- Require the user to verify the organization's official website or contact route
-- Keep API credentials and the PayPal client secret in server-side environment variables
-- Start paid AI processing only after server-side PayPal capture succeeds
-- Preserve paid status for retry within the current browser session
+- Require the user to confirm the organization's official website or contact route
+- Keep PayPal and AI credentials in server-side environment variables
+- Associate payment status with the relevant case ID
+- Avoid reusing a completed payment for another case
 
-## Current Limitations
+## Current Prototype Limitations
 
+- PayPal runs in Sandbox mode; no real charge is made
+- The current case and payment state use browser session storage
+- Refreshing the page does not restore uploaded `File` objects
+- Starting a new case clears the current browser-session case
+- Previous cases are not yet available through a user account or case history page
+- Closing the browser session may remove the active case state
 - Document extraction quality depends on the source file
-- Search results for contact routes require user verification
-- Model output is validated, but users should review all information
-- Teltruva does not automatically submit an inquiry
-- The current demonstration focuses on a representative consumer billing scenario
-- PayPal integration currently uses Sandbox only; no real money is charged
-- Paid status is temporarily stored in `sessionStorage` and is not shared across tabs, browsers, or devices
-- A persistent Teltruva Case ID and database-backed payment entitlement are not yet implemented
+- Contact-route candidates require user verification
+- Users should review all AI-generated content
+- Teltruva does not automatically submit inquiries
 
-## Future Development
+## Planned Development
 
-Planned improvements include:
-
-- Support for additional receipt and billing formats
-- Additional languages and regional communication styles
+- Google and email sign-in with Firebase Authentication
+- User-specific case history
+- Secure cloud storage for case data, generated documents, and follow-up messages
+- Reopening paid cases across browser sessions and devices
+- Additional receipt and billing formats
+- Additional languages, including Chinese and Hindi
 - Improved official-contact-route discovery
-- Persistent Teltruva Case IDs linked to PayPal order and capture records
-- Database-backed payment entitlements and two included follow-up responses
-- Follow-up message support with additional-payment rules after the included allowance
-- Firebase Authentication with Google and email sign-in
-- Privacy-focused case management
-- Broader testing with real cross-border customer-service scenarios
+- Expanded follow-up support
+- Broader testing with cross-border customer-service scenarios
+
+## Repository and Evaluation Notes
+
+- The live application is intended to be evaluated with PayPal Sandbox.
+- No real buyer or merchant credentials are included in the repository.
+- The application should be tested with a Sandbox Personal account as the buyer.
+- API keys and secrets must remain in local or Vercel environment variables.
 
 ## License
 
-This project is licensed under the Apache License 2.0. See the LICENSE file for details.
+This project is licensed under the Apache License 2.0. See the `LICENSE` file for details.
