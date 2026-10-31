@@ -232,7 +232,7 @@ function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [currentCase, setCurrentCase] = useState<TeltruvaCase | null>(() => loadCurrentCase())
   const [paymentSession, setPaymentSession] = useState<StoredPaymentSession | null>(() => readPaidPayment(currentCase))
-  const paidCapture = paymentSession?.caseId === currentCase?.internalId ? paymentSession.capture : null
+  const paidCapture = paymentSession && paymentSession.caseId === currentCase?.internalId ? paymentSession.capture : null
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('reading-documents')
   const [showProcessingOverlay, setShowProcessingOverlay] = useState(false)
