@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { INITIAL_CASE_PRODUCT } from '../../config/products';
+import type { TeltruvaCase } from '../../types/case';
 import {
   capturePayPalOrder,
   createPayPalOrder,
@@ -13,6 +14,7 @@ import type {
 
 type PayPalCheckoutProps = {
   language: 'en' | 'ja' | 'es';
+  caseContext?: Pick<TeltruvaCase, 'internalId' | 'displayCaseId'>;
   onCompleted: (capture: CaptureOrderResponse) => void;
 };
 
@@ -133,16 +135,25 @@ function loadPayPalSdk(environment: PayPalEnvironment): Promise<void> {
   });
 }
 
-function PayPalCheckout({ language, onCompleted }: PayPalCheckoutProps) {
+function PayPalCheckout({
+  language,
+  caseContext,
+  onCompleted,
+}: PayPalCheckoutProps) {
   const text = copy[language];
   const paymentSessionRef = useRef<PayPalPaymentSession | null>(null);
   const onCompletedRef = useRef(onCompleted);
+  const caseContextRef = useRef(caseContext);
   const [status, setStatus] = useState<PaymentStatus>('loading-config');
   const [message, setMessage] = useState<string>(text.loading);
 
   useEffect(() => {
     onCompletedRef.current = onCompleted;
   }, [onCompleted]);
+
+  useEffect(() => {
+    caseContextRef.current = caseContext;
+  }, [caseContext]);
 
   useEffect(() => {
     let active = true;
@@ -250,7 +261,7 @@ function PayPalCheckout({ language, onCompleted }: PayPalCheckoutProps) {
       setStatus('creating-order');
       setMessage(text.creating);
 
-      const orderPromise = createPayPalOrder().then((order) => ({
+      const orderPromise = createPayPalOrder(caseContextRef.current).then((order) => ({
         orderId: order.orderId,
       }));
 
