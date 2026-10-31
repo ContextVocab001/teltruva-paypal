@@ -5,7 +5,9 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import type { ChangeEvent, DragEvent } from 'react'
 import './App.css'
 import PaymentModal from './components/payment/PaymentModal'
+import ProcessingOverlay from './components/processing/ProcessingOverlay'
 import type { CaptureOrderResponse } from './types/payment'
+import type { ProcessingStage } from './types/processing'
 import { analyzeCase, buildCaseReviewData, generateProtectedDraft, prepareStructuredCase, runOcr, translateApprovedDraft } from './api/caseAnalysis'
 import type { CaseAnalysis, UploadedSource } from './api/caseAnalysis'
 import type { CaseReviewData } from './types/workflow'
@@ -203,6 +205,8 @@ function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paidCapture, setPaidCapture] = useState<CaptureOrderResponse | null>(() => readPaidCapture())
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [processingStage, setProcessingStage] = useState<ProcessingStage>('reading-documents')
+  const [showProcessingOverlay, setShowProcessingOverlay] = useState(false)
   const [analysisError, setAnalysisError] = useState('')
   const [analysis, setAnalysis] = useState<CaseAnalysis | null>(null)
   const [structuredReview, setStructuredReview] = useState<CaseReviewData | null>(null)
@@ -290,6 +294,8 @@ function App() {
     setMessageFileError('')
     setShowModal(false)
     setShowPaymentModal(false)
+    setShowProcessingOverlay(false)
+    setProcessingStage('reading-documents')
     setPaidCapture(null)
     window.sessionStorage.removeItem(PAYMENT_SESSION_KEY)
     setShowStructure(false)
@@ -312,12 +318,15 @@ function App() {
   const analyzeCurrentCase = async () => {
     if (!request.trim()) { setAnalysisError(language === 'ja' ? '何が問題で、どうしてほしいかを入力してください。' : 'Describe the issue and requested outcome.'); return }
     setIsAnalyzing(true); setAnalysisError('')
+    setProcessingStage('reading-documents')
+    setShowProcessingOverlay(true)
     try {
       const emlTexts = await Promise.all(messageFiles.filter((file) => file.name.toLowerCase().endsWith('.eml')).map(async (file) => parseEml(await fileToText(file))))
       const msgTexts = await Promise.all(messageFiles.filter((file) => file.name.toLowerCase().endsWith('.msg') || file.type === 'application/vnd.ms-outlook').map(parseMsg))
       const messageImages = await filesToOcrImages(messageFiles.filter((file) => !/\.(eml|msg)$/i.test(file.name) && file.type !== 'application/vnd.ms-outlook'))
       const documentImages = await filesToOcrImages(files)
       const [messageOcr, documentOcr] = await Promise.all([messageImages.length ? runOcr(messageImages) : Promise.resolve({ text: '', pages: [] as import('./api/caseAnalysis').OcrPage[] }), documentImages.length ? runOcr(documentImages) : Promise.resolve({ text: '', pages: [] as import('./api/caseAnalysis').OcrPage[] })])
+      setProcessingStage('organizing-case')
       const originalMessage = [message, ...emlTexts, ...msgTexts, messageOcr.text].filter(Boolean).join('\n\n--- MESSAGE SOURCE ---\n\n')
       const documents: UploadedSource[] = files.map((file) => ({ name: file.name, type: file.type, size: file.size }))
       if (documentOcr.text.trim()) {
@@ -326,18 +335,20 @@ function App() {
         const reviewData = await resolveDeepContactRoutes(baseReviewData)
         setAnalysis(null)
         setStructuredReview(reviewData)
+        setProcessingStage('preparing-review')
         const protectedDraft = await generateProtectedDraft({ interfaceLanguage:language, review:reviewData })
         setDraftSubject(protectedDraft.subject)
         setDraftBody(protectedDraft.body)
       } else {
         const result = await analyzeCase({ originalMessage, userRequest:request, interfaceLanguage:language, recipientLanguage, documents, documentText:'', additionalInformation:additional })
+        setProcessingStage('preparing-review')
         setAnalysis(result)
         setStructuredReview(null)
         setDraftSubject(result.draft.subject)
         setDraftBody(result.draft.body)
       }
       setShowModal(false); go('review')
-    } catch (error) { setAnalysisError(friendlyError(error, 'Analysis failed.', 'analysis')) } finally { setIsAnalyzing(false) }
+    } catch (error) { setAnalysisError(friendlyError(error, 'Analysis failed.', 'analysis')) } finally { setIsAnalyzing(false); setShowProcessingOverlay(false) }
   }
   const continueToPaidAnalysis = () => {
     if (!canAnalyze || isAnalyzing) return
@@ -356,7 +367,11 @@ function App() {
     window.sessionStorage.setItem(PAYMENT_SESSION_KEY, JSON.stringify(capture))
     setPaidCapture(capture)
     setShowPaymentModal(false)
-    void analyzeCurrentCase()
+    setProcessingStage('payment-confirmed')
+    setShowProcessingOverlay(true)
+    window.setTimeout(() => {
+      void analyzeCurrentCase()
+    }, 450)
   }
 
   const friendlyError = (error: unknown, fallback: string, stage: 'analysis'|'draft'|'translation' = 'analysis') => {
@@ -558,6 +573,7 @@ function App() {
   )
 
   return <div className="app">{header}{view==='intake'&&intake}{view==='review'&&review}{view==='draft'&&draft}{view==='translation'&&translation}
+    <ProcessingOverlay language={language} isVisible={showProcessingOverlay} stage={processingStage} />
     <PaymentModal language={language} isOpen={showPaymentModal} onClose={()=>setShowPaymentModal(false)} onCompleted={handlePaymentCompleted} />
     {showModal&&<div className="modal-bg" onMouseDown={()=>setShowModal(false)}><section className="modal" onMouseDown={e=>e.stopPropagation()}><button className="close" onClick={()=>setShowModal(false)}>×</button><header><span>AI</span><div><p>{t.modalLabel}</p><h2>{canAnalyze?t.ready:t.missing}</h2></div></header><div className="status"><div className={hasMessage?'ok':hasFiles?'info':'bad'}><span className="status-icon">{hasMessage?'✓':hasFiles?'i':'!'}</span><div><b>{t.tabs[0]}</b><p>{hasMessage?t.added:hasFiles?t.sourceFromDocs:t.sourceMissing}</p></div></div><div className={hasFiles?'ok':'info'}><span className="status-icon">{hasFiles?'✓':'i'}</span><div><b>{t.tabs[1]}</b><p>{hasFiles?`${files.length} ${t.added}`:t.optionalDocs}</p></div></div><div className={hasRequest?'ok':'bad'}><span className="status-icon">{hasRequest?'✓':'!'}</span><div><b>{t.tabs[2]}</b><p>{hasRequest?t.added:t.requestMissing}</p></div></div></div>{analysisError&&<div className="analysis-api-error" role="alert">{analysisError}</div>}<footer><button onClick={()=>setShowModal(false)} disabled={isAnalyzing}>{canAnalyze?t.reviewInputs:t.addMissing}</button>{canAnalyze&&<button className="primary" onClick={continueToPaidAnalysis} disabled={isAnalyzing}>{isAnalyzing ? (language==='ja'?'整理しています…':language==='es'?'Organizando…':'Organizing…') : paidCapture ? (language==='ja'?'支払い済み・案件整理を再試行 →':language==='es'?'Pago completado · Reintentar análisis →':'Paid · Retry case analysis →') : `${t.organize} →`}</button>}</footer></section></div>}
   </div>
