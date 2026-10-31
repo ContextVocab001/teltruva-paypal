@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as pdfjs from 'pdfjs-dist'
 import { MsgReader } from '@kenjiuno/msgreader-web-ng'
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
@@ -219,6 +219,18 @@ function App() {
   const [isRefiningDraft, setIsRefiningDraft] = useState(false)
   const [translated, setTranslated] = useState({ subject: '', body: '' })
   const [translationApproved, setTranslationApproved] = useState(false)
+  useEffect(() => {
+    if (!currentCase || currentCase.paymentStatus !== 'COMPLETED') {
+      return
+    }
+
+    setLanguage(currentCase.interfaceLanguage as Lang)
+    setRecipientLanguage(currentCase.recipientLanguage as Lang)
+    setRequest(currentCase.requestedOutcome || currentCase.issueSummary || '')
+    setStep('request')
+    setShowPaymentModal(false)
+  }, [currentCase])
+
   const messageInputRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const t = copy[language]
