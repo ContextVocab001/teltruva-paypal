@@ -166,20 +166,45 @@ async function filesToOcrImages(files: File[]) {
 
 const PAYMENT_SESSION_KEY = 'teltruva.initial-case-payment'
 
-function readPaidCapture(): CaptureOrderResponse | null {
+type StoredPaymentSession = {
+  caseId: string
+  capture: CaptureOrderResponse
+}
+
+function isCompletedCapture(value: unknown): value is CaptureOrderResponse {
+  if (!value || typeof value !== 'object') return false
+  const capture = value as Partial<CaptureOrderResponse>
+  return (
+    capture.completed === true &&
+    capture.status === 'COMPLETED' &&
+    typeof capture.orderId === 'string' &&
+    typeof capture.captureId === 'string'
+  )
+}
+
+function readPaidPayment(currentCase: TeltruvaCase | null): StoredPaymentSession | null {
   try {
     const stored = window.sessionStorage.getItem(PAYMENT_SESSION_KEY)
-    if (!stored) return null
+    if (!stored || !currentCase) return null
 
-    const parsed = JSON.parse(stored) as Partial<CaptureOrderResponse>
+    const parsed = JSON.parse(stored) as Partial<StoredPaymentSession> | CaptureOrderResponse
+
     if (
-      parsed.completed === true &&
-      parsed.status === 'COMPLETED' &&
-      typeof parsed.orderId === 'string' &&
-      typeof parsed.captureId === 'string'
+      'caseId' in parsed &&
+      typeof parsed.caseId === 'string' &&
+      parsed.caseId === currentCase.internalId &&
+      isCompletedCapture(parsed.capture)
     ) {
-      return parsed as CaptureOrderResponse
+      return { caseId: parsed.caseId, capture: parsed.capture }
     }
+
+    if (currentCase.paymentStatus === 'COMPLETED' && isCompletedCapture(parsed)) {
+      const migrated = { caseId: currentCase.internalId, capture: parsed }
+      window.sessionStorage.setItem(PAYMENT_SESSION_KEY, JSON.stringify(migrated))
+      return migrated
+    }
+
+    window.sessionStorage.removeItem(PAYMENT_SESSION_KEY)
   } catch {
     window.sessionStorage.removeItem(PAYMENT_SESSION_KEY)
   }
@@ -205,8 +230,9 @@ function App() {
   const [showStructure, setShowStructure] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paidCapture, setPaidCapture] = useState<CaptureOrderResponse | null>(() => readPaidCapture())
   const [currentCase, setCurrentCase] = useState<TeltruvaCase | null>(() => loadCurrentCase())
+  const [paymentSession, setPaymentSession] = useState<StoredPaymentSession | null>(() => readPaidPayment(currentCase))
+  const paidCapture = paymentSession?.caseId === currentCase?.internalId ? paymentSession.capture : null
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('reading-documents')
   const [showProcessingOverlay, setShowProcessingOverlay] = useState(false)
@@ -311,7 +337,7 @@ function App() {
     setShowPaymentModal(false)
     setShowProcessingOverlay(false)
     setProcessingStage('reading-documents')
-    setPaidCapture(null)
+    setPaymentSession(null)
     setCurrentCase(null)
     clearCurrentCase()
     window.sessionStorage.removeItem(PAYMENT_SESSION_KEY)
@@ -399,18 +425,23 @@ function App() {
   }
 
   const handlePaymentCompleted = (capture: CaptureOrderResponse) => {
-    window.sessionStorage.setItem(PAYMENT_SESSION_KEY, JSON.stringify(capture))
-    setPaidCapture(capture)
-
-    if (currentCase) {
-      const paidCase = saveCurrentCase({
-        ...currentCase,
-        status: 'PAID',
-        paymentStatus: 'COMPLETED',
-        aiStatus: 'QUEUED',
-      })
-      setCurrentCase(paidCase)
+    if (!currentCase) {
+      setShowPaymentModal(false)
+      setAnalysisError('The payment was completed, but the related case could not be found. Please start a new case.')
+      return
     }
+
+    const completedPayment = { caseId: currentCase.internalId, capture }
+    window.sessionStorage.setItem(PAYMENT_SESSION_KEY, JSON.stringify(completedPayment))
+    setPaymentSession(completedPayment)
+
+    const paidCase = saveCurrentCase({
+      ...currentCase,
+      status: 'PAID',
+      paymentStatus: 'COMPLETED',
+      aiStatus: 'QUEUED',
+    })
+    setCurrentCase(paidCase)
 
     setShowPaymentModal(false)
     setProcessingStage('payment-confirmed')
